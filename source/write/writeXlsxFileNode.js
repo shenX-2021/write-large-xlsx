@@ -1,4 +1,5 @@
 import fs from 'fs'
+import fsp from 'fs/promises'
 import path from 'path'
 import os from 'os'
 
@@ -62,8 +63,8 @@ export default async function writeXlsxFile(data, {
 		writeFile(path.join(xl, 'sharedStrings.xml'), getSharedStringsXml())
 	]
 
-	for (const { id, data } of sheets) {
-		promises.push(writeFile(path.join(worksheetsPath, `sheet${id}.xml`), data))
+	for (const { id, dataList } of sheets) {
+		promises.push(writeLargeFile(path.join(worksheetsPath, `sheet${id}.xml`), dataList))
 	}
 
 	await Promise.all(promises)
@@ -80,6 +81,16 @@ export default async function writeXlsxFile(data, {
 	} else {
 		return archive.write()
 	}
+}
+
+async function writeLargeFile(path, dataList) {
+	try {
+		await fsp.rm(path);
+	} catch {}	
+	let offset = 0;
+	for (const data of dataList) {
+		await fsp.writeFile(path, data, { flag: 'a'})
+	}	
 }
 
 function writeFile(path, contents) {

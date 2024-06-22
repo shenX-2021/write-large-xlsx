@@ -70,7 +70,7 @@ export function generateSheets({
     sheets: sheetNames.map((sheetName, i) => ({
       id: i + 1,
       name: sheetName,
-      data: worksheets[i]
+      dataList: worksheets[i]
     })),
     getSharedStringsXml,
     getStylesXml

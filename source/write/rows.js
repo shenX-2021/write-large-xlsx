@@ -34,13 +34,13 @@ export default function generateRows(data, {
 			})
 		)))
 	}
-	return data.map((row, index) => generateRow(row, index, {
+	return data.map((row, index) => Buffer.from(generateRow(row, index, {
 		getStyle,
 		getSharedString,
 		customFont,
 		dateFormat,
 		usesSchema: schema !== undefined
-	})).join('')
+	}), 'utf-8'));
 }
 
 const DEFAULT_HEADER_STYLE = {

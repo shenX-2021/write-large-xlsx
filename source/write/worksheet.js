@@ -32,19 +32,24 @@ export default function generateWorksheet(data_, {
 
 	const { data, mergedCells } = processMergedCells(data_, { schema })
 
-  return WORKSHEET_TEMPLATE
-  	.replace('{data}', generateRows(data, {
-  		schema,
-  		headerStyle,
-  		getStyle,
-  		getSharedString,
-  		customFont,
-  		dateFormat
-  	}))
+  const bufferList = WORKSHEET_TEMPLATE
   	.replace('{views}', generateViews({ stickyRowsCount, stickyColumnsCount }))
   	.replace('{columnsDescription}', generateColumnsDescription({ schema, columns }))
   	.replace('{mergedCellsDescription}', generateMergedCellsDescription(mergedCells))
   	.replace('{layout}', generateLayout({ sheetId, orientation }))
+		.split('{data}')
+		.map((item) => Buffer.from(item, 'utf-8'))
+
+	const rows = generateRows(data, {
+		schema,
+		headerStyle,
+		getStyle,
+		getSharedString,
+		customFont,
+		dateFormat
+	});
+
+	return [bufferList[0], ...rows, bufferList[1]];
 }
 
 function validateData(data, { schema }) {

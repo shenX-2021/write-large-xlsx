@@ -39,8 +39,10 @@
   "dependencies": {
     "@babel/runtime": "^7.17.9",
     "archiver": "^7.0.1",
+    "crc32-stream": "^6.0.0",
     "file-saver": "^2.0.5",
-    "jszip": "^3.9.1"
+    "jszip": "^3.9.1",
+    "minizlib": "^3.0.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.10",
