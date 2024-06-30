@@ -6,10 +6,10 @@ import fs from "fs";
 import { CRC32Stream } from "crc32-stream";
 import { DeflateRaw } from "minizlib";
 
-exports.ZipFile = ZipFile;
-exports.ZipEntry = ZipEntry;
+// exports.ZipFile = ZipFile;
+// exports.ZipEntry = ZipEntry;
 
-exports.create = function (map) {
+export const create = function (map) {
   var ret = new ZipFile();
   if (map && typeof map === "object") {
     for (var keys = Object.keys(map), i = 0, L = keys.length; i < L; i++) {
@@ -35,8 +35,8 @@ ZipFile.prototype.add = async function (name, filePath, options) {
   }
   // addDirEntry(this, name);
   var entry = (this[name] = new ZipEntry(name, options));
-  entry.buffer = buffer;
-  entry.originalSize = buffer.length;
+  // entry.buffer = buffer;
+  // entry.originalSize = buffer.length;
   entry.crc32 = await crc32(filePath);
   entry.filePath = filePath;
   try {
@@ -85,8 +85,11 @@ ZipFile.prototype.zip = function () {
       var nameBuf = (nameBufs[i] = Buffer.from(names[i])),
         zippedBuf = zippedEntries[i];
       fileLen += (nameBuf.length << 1) + (zippedBuf ? zippedBuf.length : 0); // CONSTANT
+      if (self[names[i]].needZip64) {
+        fileLen += 32
+      }
     }
-    fileLen += L * 76 + 22 + 20 + 12;
+    fileLen += L * 76 + 22;
     var dest = Buffer.alloc(fileLen),
       offset = 0;
 
@@ -103,20 +106,33 @@ ZipFile.prototype.zip = function () {
         offset,
         true
       ); // version needed to extract the file
-      offset = dest.writeUInt16LE(0x0006, true); // flags
+      offset = dest.writeUInt16LE(0x0006, offset, true); // flags
       offset = dest.writeUInt16LE(entry.noCompress ? 0 : 8, offset, true); // compress method
       offset = dest.writeUInt32LE(0, offset, true); // date and time
       offset = dest.writeUInt32LE(entry.crc32, offset, true); // crc32
-      offset = dest.writeUInt32LE(
-        entry.needZip64 ? 0xffffffff : zippedBuf.length,
-        offset,
-        true
-      ); // compressed size
-      offset = dest.writeUInt32LE(
-        entry.needZip64 ? 0xffffffff : entry.originalSize,
-        offset,
-        true
-      ); // uncompressed size
+      if (entry.isDir) {
+        offset = dest.writeUInt32LE(
+          0,
+          offset,
+          true
+        ); // compressed size
+        offset = dest.writeUInt32LE(
+          0,
+          offset,
+          true
+        ); // uncompressed size
+      } else {
+        offset = dest.writeUInt32LE(
+          entry.needZip64 ? 0xffffffff : zippedBuf.length,
+          offset,
+          true
+        ); // compressed size
+        offset = dest.writeUInt32LE(
+          entry.needZip64 ? 0xffffffff : entry.originalSize,
+          offset,
+          true
+        ); // uncompressed size
+      }
       offset = dest.writeUInt16LE(nameBuf.length, offset, true); // filename len
       offset = dest.writeUInt16LE(entry.needZip64 ? 20 : 0, offset, true); // extra field length
 
@@ -131,7 +147,7 @@ ZipFile.prototype.zip = function () {
           offset,
           true  
         ); // uncompressed size
-        offset = dest.writeBigUInt64LE(BigInt(zippedBuf.size), offset, true); // compressed size
+        offset = dest.writeBigUInt64LE(BigInt(zippedBuf.length), offset, true); // compressed size
       }
 
       if (zippedBuf) {
@@ -148,7 +164,7 @@ ZipFile.prototype.zip = function () {
       zippedBuf = zippedEntries[i];
       offset = dest.writeUInt32BE(0x504b0102, offset, true); // 'PK',01,02
       offset = dest.writeUInt16LE(
-        entry.needZip64 ? 0x002d : 0x0014,
+        0x002d,
         offset,
         true
       ); // version made by
@@ -161,12 +177,21 @@ ZipFile.prototype.zip = function () {
       offset = dest.writeUInt16LE(entry.noCompress ? 0 : 8, offset, true); // compress method
       offset = dest.writeUInt32LE(0, offset, true); // date and time
       offset = dest.writeUInt32LE(entry.crc32, offset, true); // crc32
-      offset = dest.writeUInt32LE(zippedBuf.length, offset, true); // compressed size
-      offset = dest.writeUInt32LE(
-        entry.needZip64 ? 0xffffffff : entry.originalSize,
-        offset,
-        true
-      ); // uncompressed size
+      if (entry.isDir) {
+        offset = dest.writeUInt32LE(0, offset, true); // compressed size
+        offset = dest.writeUInt32LE(
+          0,
+          offset,
+          true
+        ); // uncompressed size
+      } else {
+        offset = dest.writeUInt32LE(zippedBuf.length, offset, true); // compressed size
+        offset = dest.writeUInt32LE(
+          entry.needZip64 ? 0xffffffff : entry.originalSize,
+          offset,
+          true
+        ); // uncompressed size
+      }
       offset = dest.writeUInt16LE(nameBuf.length, offset, true); // filename len
       offset = dest.writeUInt16LE(entry.needZip64 ? 12 : 0, offset, true); // extra field length
       offset = dest.writeUInt16LE(0, offset, true); // file comment length
@@ -179,7 +204,7 @@ ZipFile.prototype.zip = function () {
 
       if (entry.needZip64) {
         offset = dest.writeUInt16LE(0x0001, offset, true); // header id. zip64 0x0001
-        offset = dest.writeUInt16LE(16, offset, true); // data size
+        offset = dest.writeUInt16LE(8, offset, true); // data size
         offset = dest.writeBigUInt64LE(
           BigInt(entry.originalSize),
           offset,
@@ -438,7 +463,7 @@ function zipFile(fileLength, read, readAll) {
  * @param file a filename, or a fd, or a buffer
  * @returns {*}
  */
-exports.unzip = function (file) {
+export const unzip = function (file) {
   if (typeof file === "string") {
     file = fs.openSync(file, "r");
   }
@@ -500,9 +525,11 @@ function crc32(filePath) {
       // do something with checksum.digest() here
       if (err) return reject(err);
 
-      resolve(checksum.digest());
+      resolve(checksum.digest().readUInt32BE());
     });
-    checksum.on("data", () => {});
+    checksum.on("data", (chunk) => {
+      // console.log('data', chunk)
+    });
     checksum.on("error", function (err) {
       return reject(err);
     });

@@ -20,3 +20,6 @@ npm-debug.log
 *.sublime-workspace
 
 /test-output
+
+test/input
+test/output
