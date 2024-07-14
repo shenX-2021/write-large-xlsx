@@ -19,7 +19,4 @@ npm-debug.log
 # Sublime
 *.sublime-workspace
 
-/test-output
-
-test/input
-test/output
+local/
