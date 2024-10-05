@@ -1,6 +1,6 @@
 export class SharedStrings {
   sharedStrings: string[] = [];
-  sharedStringsIndex: Record<string, number> = {};
+  sharedStringsIndex: Record<string, string> = {};
   count = 0;
 
   getSharedStringsXml(): string {
@@ -17,10 +17,10 @@ export class SharedStrings {
     return xml;
   }
 
-  getSharedString(str: string) {
+  getSharedString(str: string): string {
     let id = this.sharedStringsIndex[str];
     if (id === undefined) {
-      id = this.sharedStrings.length;
+      id = this.sharedStrings.length.toString();
       this.sharedStringsIndex[str] = id;
       this.sharedStrings.push(str);
     }

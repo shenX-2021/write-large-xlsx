@@ -1,10 +1,9 @@
 import { generateTag } from './utils';
 
-export function generateCell(cell: Cell, rowIdx: number) {
+export function generateCell(cell: FormatCell, rowIdx: number) {
   const attrs = {
     r: formatAttr_r(rowIdx, cell.columnIdx),
-    // TODO: support more type
-    t: 's',
+    t: cell.t,
   };
 
   return generateTag('c', generateTag('v', cell.value), attrs);
@@ -30,8 +29,14 @@ export function formatColumnIndex(
 }
 
 export interface Cell {
-  value: any;
+  value: CellValue;
   columnIdx: number;
 }
 
-export type CellValue = string | number | Date;
+export type CellValue = string | number | Date | boolean;
+
+export interface FormatCell {
+  value: string;
+  columnIdx: number;
+  t: string;
+}

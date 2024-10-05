@@ -1,4 +1,4 @@
-import { Cell, CellValue, generateCell } from './cell';
+import { Cell, CellValue, FormatCell, generateCell } from './cell';
 import { SharedStrings } from './shared-strings';
 import { generateTag } from './utils';
 
@@ -18,15 +18,17 @@ export function generateRow(
   );
 }
 
-function formatRow(row: Row, sharedStrings: SharedStrings): Cell[] {
+function formatRow(row: Row, sharedStrings: SharedStrings): FormatCell[] {
   let index = 0;
   return row.map((item) => {
-    const cell: Cell = item.value
+    const value: unknown = item?.value ?? item;
+    const cell: FormatCell = item.value
       ? {
-          value: sharedStrings.getSharedString(item.value),
+          value: '',
           columnIdx: item.columnIdx,
+          t: '',
         }
-      : { value: sharedStrings.getSharedString(item), columnIdx: index };
+      : { value: '', columnIdx: index, t: '' };
     if (typeof cell.columnIdx !== 'number') {
       cell.columnIdx = index;
     }
@@ -34,6 +36,33 @@ function formatRow(row: Row, sharedStrings: SharedStrings): Cell[] {
       throw new Error('Illegal value of columnIdx attribute.');
     }
     index = cell.columnIdx + 1;
+
+    switch (typeof value) {
+      case 'boolean': {
+        cell.value = value.toString();
+        cell.t = 'b';
+        break;
+      }
+      case 'number': {
+        cell.value = value.toString();
+        cell.t = 'n';
+        break;
+      }
+      case 'string': {
+        cell.t = 's';
+        cell.value = sharedStrings.getSharedString(value);
+        break;
+      }
+      default: {
+        if (value instanceof Date) {
+          cell.t = 'd';
+          cell.value = value.toISOString();
+        } else if (value) {
+          cell.t = 's';
+          cell.value = value.toString();
+        }
+      }
+    }
 
     return cell;
   });
