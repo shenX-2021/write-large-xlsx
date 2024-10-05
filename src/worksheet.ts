@@ -1,16 +1,19 @@
 import { XlsxZip } from 'xlsx-zip';
 import { Readable } from 'stream';
 import { generateRow, Row } from './row';
+import { SharedStrings } from './shared-strings';
 
 interface WorksheetOptions {
   xlsxZip: XlsxZip;
   id: number;
   name: string;
+  sharedStrings: SharedStrings;
 }
 
 export class Worksheet {
   private options: WorksheetOptions;
   private xlsxZip: XlsxZip;
+  private sharedStrings: SharedStrings;
 
   public id: number;
   public name: string;
@@ -26,6 +29,7 @@ export class Worksheet {
   constructor(options: WorksheetOptions) {
     this.options = options;
     this.xlsxZip = this.options.xlsxZip;
+    this.sharedStrings = this.options.sharedStrings;
     this.id = this.options.id;
     this.name = this.options.name;
 
@@ -73,7 +77,7 @@ export class Worksheet {
     if (!this._opening) {
       throw new Error("This worksheet is closed, can't not add data now.");
     }
-    const rowStr = generateRow(row, this.rowIdx++);
+    const rowStr = generateRow(row, this.rowIdx++, this.sharedStrings);
     this.stream.push(rowStr);
     return this;
   }

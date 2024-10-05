@@ -8,6 +8,7 @@ import {
   generateWorkbookXml,
   generateWorkbookXmlRels,
 } from './statics';
+import { SharedStrings } from './shared-strings';
 
 interface Options {
   zlib?: ZlibOptions;
@@ -17,6 +18,7 @@ export class Workbook {
   private options: Options;
   private outputPath: string;
   private xlsxZip: XlsxZip;
+  private sharedStrings = new SharedStrings();
 
   private sheetList: Worksheet[] = [];
   private sheetIndex: number = 0;
@@ -48,6 +50,10 @@ export class Workbook {
       'xl/workbook.xml',
       Buffer.from(generateWorkbookXml(this.sheetList)),
     );
+    await this.xlsxZip.add(
+      'xl/sharedStrings.xml',
+      Buffer.from(this.sharedStrings.getSharedStringsXml()),
+    );
 
     const buf = await this.xlsxZip.finish();
     console.log(buf);
@@ -57,7 +63,12 @@ export class Workbook {
     const id = this.sheetList.length + 1;
     if (!name) name = `sheet${id}`;
     name = this.generateName(name);
-    const worksheet = new Worksheet({ xlsxZip: this.xlsxZip, id, name });
+    const worksheet = new Worksheet({
+      xlsxZip: this.xlsxZip,
+      id,
+      name,
+      sharedStrings: this.sharedStrings,
+    });
 
     this.sheetList.push(worksheet);
 

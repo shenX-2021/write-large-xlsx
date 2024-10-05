@@ -4,7 +4,7 @@ export function generateCell(cell: Cell, rowIdx: number) {
   const attrs = {
     r: formatAttr_r(rowIdx, cell.columnIdx),
     // TODO: support more type
-    t: 'str',
+    t: 's',
   };
 
   return generateTag('c', generateTag('v', cell.value), attrs);
@@ -30,7 +30,7 @@ export function formatColumnIndex(
 }
 
 export interface Cell {
-  value: string;
+  value: any;
   columnIdx: number;
 }
 
