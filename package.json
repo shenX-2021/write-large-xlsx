@@ -1,10 +1,11 @@
 {
   "name": "write-large-xlsx",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "local": "ts-node local/test.ts"
+    "local": "ts-node src/test.ts",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
