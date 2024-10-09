@@ -39,6 +39,6 @@
     "typescript-eslint": "^7.16.0"
   },
   "dependencies": {
-    "xlsx-zip": "^0.3.3"
+    "xlsx-zip": "^0.3.4"
   }
 }
